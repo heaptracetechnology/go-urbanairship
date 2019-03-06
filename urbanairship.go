@@ -1,7 +1,22 @@
 package urbanairship
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+)
+
+const (
+	// ua_server_url fcm server url
+	ua_server_url = "https://go.urbanairship.com/api/push/"
+)
+
+var (
+	// uaServerUrl for testing purposes
+	uaServerUrl = ua_server_url
 )
 
 // UrbanAirshipMsg represents usrbanairship request message
@@ -16,6 +31,7 @@ type UAMsg struct {
 // UrbanAirshipResponseStatus represents urban airship response message
 type UAResponseStatus struct {
 	Ok            bool
+	StatusCode    int
 	Operation_id  string      `json:"operation_id"`
 	Push_ids      []string    `json:"push_ids"`
 	Message_ids   []string    `json:"message_ids,omitempty"`
@@ -44,6 +60,11 @@ func NewUAClient(apiKey string, masterKey string) *UAClient {
 	ua.Authorization = base64.StdEncoding.EncodeToString([]byte(generateAuth))
 
 	return ua
+}
+
+// authorizationHeader generates the value of the Authorization key
+func (this *UAClient) authorizationHeader() string {
+	return fmt.Sprintf("key=%v", this.Authorization)
 }
 
 // NewUATagsMsg sets the targeted tagged devices
@@ -101,4 +122,71 @@ func (this *UAClient) NewSendChannelIdMsg(authorizationKey string, channelid str
 	this.Message.Notification = notification
 
 	return this
+}
+
+// toJsonByte converts uaMsg to a json byte
+func (this *UAMsg) toJsonByte() ([]byte, error) {
+
+	return json.Marshal(this)
+
+}
+
+// parseStatusBody parse UA response body
+func (this *UAResponseStatus) parseStatusBody(body []byte) error {
+
+	if err := json.Unmarshal([]byte(body), &this); err != nil {
+		return err
+	}
+	return nil
+
+}
+
+// sendOnce send a single request to ua
+func (this *UAClient) sendOnce() (*UAResponseStatus, error) {
+
+	uaRespStatus := new(UAResponseStatus)
+
+	jsonByte, err := this.Message.toJsonByte()
+	if err != nil {
+		return uaRespStatus, err
+	}
+
+	request, err := http.NewRequest("POST", uaServerUrl, bytes.NewBuffer(jsonByte))
+	request.Header.Set("Authorization", this.authorizationHeader())
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		return uaRespStatus, err
+	}
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return uaRespStatus, err
+	}
+
+	uaRespStatus.StatusCode = response.StatusCode
+
+	//uaRespStatus.RetryAfter = response.Header.Get(retry_after_header)
+
+	if response.StatusCode != 200 {
+		return uaRespStatus, nil
+	}
+
+	err = uaRespStatus.parseStatusBody(body)
+	if err != nil {
+		return uaRespStatus, err
+	}
+	uaRespStatus.Ok = true
+
+	return uaRespStatus, nil
+}
+
+// Send to ua
+func (this *UAClient) Send() (*UAResponseStatus, error) {
+	return this.sendOnce()
+
 }
