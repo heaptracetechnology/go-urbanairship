@@ -152,8 +152,9 @@ func (this *UAClient) sendOnce() (*UAResponseStatus, error) {
 	}
 
 	request, err := http.NewRequest("POST", uaServerUrl, bytes.NewBuffer(jsonByte))
-	request.Header.Set("Authorization", this.authorizationHeader())
+	request.Header.Set("Authorization", "Basic X2kzWkh3b1VTeEtKekRfb0ExUXVDUXJQT1pwOVdzUTFpLWJRVjZuWUpwU0E=")
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/vnd.urbanairship+json; version=3")
 
 	client := &http.Client{}
 	response, err := client.Do(request)
