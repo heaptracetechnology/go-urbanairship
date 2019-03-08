@@ -6,9 +6,9 @@ Urbanairship Push Notification Library using golang ( Go )
 
 * Send push notification by tag
 * Send push notification by named user
-* Send push notification by channel id
+* Send push notification by channel ID
     - Install 1st Flight app in your device (android/ios)
-	- Get channel id from app 
+	- Get channel ID from app 
 
 ## Usage
 
@@ -36,7 +36,7 @@ App key and Master Secret key can be found in:
 
 1. Urbanairship project settings
 2. APIs and Integrations
-3. then copy the app key and click on textbox below master secret key to revel master key
+3. Copy the app key and click on textbox below master secret key to revel master key
 
 # Examples
 

@@ -4,19 +4,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
 
 const (
 	// ua_server_url fcm server url
-	ua_server_url = "https://go.urbanairship.com/api/push/"
-)
-
-var (
-	// uaServerURL for testing purposes
-	uaServerURL = ua_server_url
+	UA_SERVER_URL = "https://go.urbanairship.com/api/push/"
 )
 
 type Audiance struct {
@@ -70,37 +64,32 @@ func NewUAClient(apiKey string, masterKey string, channelType string) *UAClient 
 	return ua
 }
 
-// authorizationHeader generates the value of the Authorization key
-func (this *UAClient) authorizationHeader() string {
-	return fmt.Sprintf("key=%v", this.Authorization)
-}
+// NewUATagsMessage sets the targeted tagged devices
+func (this *UAClient) NewUATagsMessage(authorizationKey string, tag string, deviceTypes []string, notification Notification) *UAClient {
 
-// NewUATagsMsg sets the targeted tagged devices
-func (this *UAClient) NewUATagsMsg(authorizationKey string, tag string, deviceTypes []string, notification Notification) *UAClient {
-
-	this.NewSendTagMsg(authorizationKey, tag, deviceTypes, notification)
+	this.NewSendTagMessage(authorizationKey, tag, deviceTypes, notification)
 
 	return this
 }
 
-// NewUANamedUserMsg sets the targeted nameuser
-func (this *UAClient) NewUANamedUserMsg(authorizationKey string, namedUser string, deviceTypes []string, notification Notification) *UAClient {
+// NewUANamedUserMessage sets the targeted nameuser
+func (this *UAClient) NewUANamedUserMessage(authorizationKey string, namedUser string, deviceTypes []string, notification Notification) *UAClient {
 
-	this.NewSendnamedUserMsg(authorizationKey, namedUser, deviceTypes, notification)
-
-	return this
-}
-
-// NewUAChannelIdMsg sets the targeted to channelid
-func (this *UAClient) NewUAChannelIdMsg(authorizationKey string, channelId string, channelType string, deviceTypes []string, notification Notification) *UAClient {
-
-	this.NewSendChannelIdMsg(authorizationKey, channelId, channelType, deviceTypes, notification)
+	this.NewSendnamedUserMessage(authorizationKey, namedUser, deviceTypes, notification)
 
 	return this
 }
 
-// NewSendTagMsg sets the targeted tag and the data payload
-func (this *UAClient) NewSendTagMsg(authorizationKey string, tag string, deviceTypes []string, notification Notification) *UAClient {
+// NewUAChannelIdMessage sets the targeted to channelid
+func (this *UAClient) NewUAChannelIdMessage(authorizationKey string, channelId string, channelType string, deviceTypes []string, notification Notification) *UAClient {
+
+	this.NewSendChannelIdMessage(authorizationKey, channelId, channelType, deviceTypes, notification)
+
+	return this
+}
+
+// NewSendTagMessage sets the targeted tag and the data payload
+func (this *UAClient) NewSendTagMessage(authorizationKey string, tag string, deviceTypes []string, notification Notification) *UAClient {
 
 	this.Authorization = authorizationKey
 	this.Message.Audience.Tag = tag
@@ -110,8 +99,8 @@ func (this *UAClient) NewSendTagMsg(authorizationKey string, tag string, deviceT
 	return this
 }
 
-// NewSendnamedUserMsg sets the targeted nameduser and the data payload
-func (this *UAClient) NewSendnamedUserMsg(authorizationKey string, namedUser string, deviceTypes []string, notification Notification) *UAClient {
+// NewSendnamedUserMessage sets the targeted nameduser and the data payload
+func (this *UAClient) NewSendnamedUserMessage(authorizationKey string, namedUser string, deviceTypes []string, notification Notification) *UAClient {
 
 	this.Authorization = authorizationKey
 	this.Message.Audience.NamedUser = namedUser
@@ -121,8 +110,8 @@ func (this *UAClient) NewSendnamedUserMsg(authorizationKey string, namedUser str
 	return this
 }
 
-// NewSendChannelIdMsg sets the targeted channelid and the data payload
-func (this *UAClient) NewSendChannelIdMsg(authorizationKey string, channelId string, channelType string, deviceTypes []string, notification Notification) *UAClient {
+// NewSendChannelIdMessage sets the targeted channelid and the data payload
+func (this *UAClient) NewSendChannelIdMessage(authorizationKey string, channelId string, channelType string, deviceTypes []string, notification Notification) *UAClient {
 
 	this.Authorization = authorizationKey
 	if channelType == "android" {
@@ -137,15 +126,15 @@ func (this *UAClient) NewSendChannelIdMsg(authorizationKey string, channelId str
 	return this
 }
 
-// toJsonByte converts uaMsg to a json byte
-func (this *UAMessage) toJsonByte() ([]byte, error) {
+// ToJsonByte converts uaMessage to a json byte
+func (this *UAMessage) ToJsonByte() ([]byte, error) {
 
 	return json.Marshal(this)
 
 }
 
-// parseStatusBody parse UA response body
-func (this *UAResponseStatus) parseStatusBody(body []byte) error {
+// ParseStatusBody parse UA response body
+func (this *UAResponseStatus) ParseStatusBody(body []byte) error {
 
 	if err := json.Unmarshal([]byte(body), &this); err != nil {
 		return err
@@ -155,16 +144,16 @@ func (this *UAResponseStatus) parseStatusBody(body []byte) error {
 }
 
 // sendOnce send a single request to ua
-func (this *UAClient) sendOnce() (*UAResponseStatus, error) {
+func (this *UAClient) SendOnce() (*UAResponseStatus, error) {
 
 	uaResponseStatus := new(UAResponseStatus)
 
-	jsonByte, err := this.Message.toJsonByte()
+	jsonByte, err := this.Message.ToJsonByte()
 	if err != nil {
 		return uaResponseStatus, err
 	}
 
-	request, err := http.NewRequest("POST", uaServerURL, bytes.NewBuffer(jsonByte))
+	request, err := http.NewRequest("POST", UA_SERVER_URL, bytes.NewBuffer(jsonByte))
 	request.Header.Set("Authorization", "Basic "+this.Authorization)
 	request.Header.Set("Content-Type", "application/json")
 
@@ -182,7 +171,7 @@ func (this *UAClient) sendOnce() (*UAResponseStatus, error) {
 		return uaResponseStatus, err
 	}
 
-	err = uaResponseStatus.parseStatusBody(body)
+	err = uaResponseStatus.ParseStatusBody(body)
 	if err != nil {
 		return uaResponseStatus, err
 	}
@@ -193,6 +182,6 @@ func (this *UAClient) sendOnce() (*UAResponseStatus, error) {
 
 // Send to ua
 func (this *UAClient) Send() (*UAResponseStatus, error) {
-	return this.sendOnce()
+	return this.SendOnce()
 
 }
