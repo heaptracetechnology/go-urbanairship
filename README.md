@@ -21,7 +21,7 @@ go get github.com/heaptracetechnology/go-urbanairship
 https://docs.urbanairship.com/tutorials/getting-started/1st-flight-app/
 ```
 
-###### Urbanairship create project
+#### Urbanairship create project
 
 Create project in urbanairship:
 
@@ -30,7 +30,7 @@ Create project in urbanairship:
 3. Create project with all details
 
 
-###### Get App key and Master Secret key
+#### Get App key and Master Secret key
 
 App key and Master Secret key can be found in:
 
