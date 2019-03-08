@@ -9,6 +9,7 @@ Urbanairship Push Notification Library using golang ( Go )
 * Send push notification by channel ID
     - Install 1st Flight app in your device (android/ios)
 	- Get channel ID from app 
+	- Add named user and tag in settings
 
 ## Usage
 
